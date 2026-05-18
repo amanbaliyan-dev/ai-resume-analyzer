@@ -77,15 +77,15 @@ ${extractedText}
     };
 
     return (
-        <section className="pb-28 flex flex-col items-center">
+        <section className="pb-20 md:pb-28 flex flex-col items-center">
 
-            <h2 className="text-4xl md:text-5xl font-bold text-center mb-14">
+            <h2 className="text-3xl md:text-5xl font-bold text-center mb-8 md:mb-14">
                 AI Suggestions
             </h2>
 
             <button
                 onClick={generateSuggestions}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-8 py-3 rounded-xl mb-12 font-medium transition-all duration-300"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 px-6 md:px-8 py-3 rounded-xl mb-10 md:mb-12 font-medium transition-all duration-300 w-full md:w-auto"
             >
                 {loading ? "Analyzing Resume..." : "Generate AI Suggestions"}
             </button>
@@ -98,7 +98,7 @@ ${extractedText}
 
                         <div
                             key={index}
-                            className="bg-[#0d1324] border border-gray-800 rounded-2xl px-6 py-5 text-lg hover:border-purple-500 transition-all duration-300"
+                            className="bg-[#0d1324] border border-gray-800 rounded-2xl px-5 py-4 md:px-6 md:py-5 text-base md:text-lg hover:border-purple-500 transition-all duration-300 w-full md:w-auto text-left"
                         >
                             {item}
                         </div>

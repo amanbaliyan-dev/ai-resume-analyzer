@@ -1,15 +1,15 @@
 import { Link } from "react-router-dom";
 function SignIn() {
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center px-6">
+        <div className="min-h-screen bg-black flex items-center justify-center px-4 md:px-6 py-10">
 
-            <div className="w-full max-w-md bg-[#0d1324] border border-gray-800 rounded-3xl p-10">
+            <div className="w-full max-w-md bg-[#0d1324] border border-gray-800 rounded-3xl p-6 md:p-10">
 
-                <h1 className="text-4xl font-bold text-center text-white">
+                <h1 className="text-3xl md:text-4xl font-bold text-center text-white">
                     Sign In
                 </h1>
 
-                <div className="mt-10 space-y-5">
+                <div className="mt-8 md:mt-10 space-y-5">
 
                     <input
                         type="email"

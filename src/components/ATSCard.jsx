@@ -1,19 +1,19 @@
 function ATSCard({ atsScore }) {
     return (
-        <section className="flex justify-center pb-24">
-            <div className="w-full max-w-2xl bg-[#0d1324] border border-gray-800 rounded-3xl p-12 md:p-14 text-center shadow-xl">
+        <section className="flex justify-center pb-16 md:pb-24">
+            <div className="w-full max-w-2xl bg-[#0d1324] border border-gray-800 rounded-3xl p-8 md:p-14 text-center shadow-xl mx-auto">
 
-                <h2 className="text-4xl md:text-5xl font-bold">
+                <h2 className="text-3xl md:text-5xl font-bold">
                     ATS Score
                 </h2>
 
-                <div className="text-7xl md:text-8xl font-bold text-purple-500 mt-8">
+                <div className="text-6xl md:text-8xl font-bold text-purple-500 mt-6 md:mt-8">
 
                     {atsScore !== null ? `${atsScore}%` : "--"}
 
                 </div>
 
-                <p className="text-gray-400 text-lg mt-8 leading-relaxed">
+                <p className="text-gray-400 text-base md:text-lg mt-6 md:mt-8 leading-relaxed">
 
                     {atsScore !== null
                         ? "Your resume analysis score based on AI evaluation."
