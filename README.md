@@ -1,16 +1,125 @@
-# React + Vite
+# 🚀 ResuAI — AI Resume Analyzer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+An AI-powered ATS Resume Analyzer built with React, Vite, Tailwind CSS, Clerk Authentication, and OpenRouter AI integration.
 
-Currently, two official plugins are available:
+ResuAI helps users analyze resumes, generate ATS improvement suggestions, and get AI-powered feedback to improve their chances of getting shortlisted.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+# 🌐 Live Demo
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+https://ai-resume-analyzer-six-brown.vercel.app/
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+# ✨ Features
+
+✅ AI-powered ATS resume analysis
+✅ Dynamic ATS scoring
+✅ PDF resume upload & parsing
+✅ AI-generated improvement suggestions
+✅ Clerk Authentication (Sign In / Sign Up)
+✅ Protected dashboard routes
+✅ Responsive modern UI
+✅ SaaS-style dark theme interface
+✅ Secure environment variable handling
+
+---
+
+# 🛠️ Tech Stack
+
+## Frontend
+
+* React.js
+* Vite
+* Tailwind CSS
+
+## Authentication
+
+* Clerk
+
+## AI Integration
+
+* OpenRouter API
+
+## PDF Processing
+
+* pdfjs-dist
+
+## Deployment
+
+* Vercel
+
+---
+
+
+
+# ⚙️ Installation & Setup
+
+## Clone Repository
+
+```bash
+git clone https://github.com/amanbaliyan-dev/ai-resume-analyzer.git
+```
+
+---
+
+## Navigate to Project
+
+```bash
+cd ai-resume-analyzer
+```
+
+---
+
+## Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## Setup Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_OPENROUTER_API_KEY=your_api_key
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
+```
+
+---
+
+## Run Development Server
+
+```bash
+npm run dev
+```
+
+---
+
+# 📌 Future Improvements
+
+* Resume history tracking
+* Download ATS reports
+* AI keyword matching
+* Resume templates
+* Analytics dashboard
+* Interview preparation suggestions
+* Real-time ATS visualization
+
+---
+
+# 🎯 Purpose
+
+This project was built to combine Full Stack Development with AI integration and create a modern AI-powered SaaS-style application.
+
+---
+
+# 👨‍💻 Author
+
+Aman Baliyan
+
+* GitHub: https://github.com/amanbaliyan-dev
+* LinkedIn: https://linkedin.com/in/aman-baliyan-7804a2205
