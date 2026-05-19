@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react";
-import Logo from "../components/common/Logo";
+import Navbar from "../components/common/Navbar";
 
 function Dashboard() {
     const { user } = useUser();
@@ -79,28 +79,7 @@ function Dashboard() {
             <div className="absolute bottom-0 left-0 w-[450px] h-[450px] bg-indigo-600/5 rounded-full blur-[100px] pointer-events-none -z-10" />
 
             {/* Navbar */}
-            <nav className="border-b border-gray-950 backdrop-blur-md sticky top-0 z-50 bg-[#03000a]/70">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <Logo />
-                    </Link>
-
-                    <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-300">
-                        <Link to="/resume" className="hover:text-purple-400 transition-colors">ResuAI</Link>
-                        <Link to="/interview" className="hover:text-purple-400 transition-colors">AI Mock Interview</Link>
-                        <Link to="/voice" className="hover:text-purple-400 transition-colors">Voice Interview</Link>
-                        <Link to="/coding" className="hover:text-purple-400 transition-colors">Coding Round</Link>
-                        <Link to="/dashboard" className="text-purple-400">Dashboard</Link>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <Link to="/" className="text-sm font-medium text-gray-400 hover:text-white mr-2 transition-colors">
-                            Exit Dashboard
-                        </Link>
-                        <UserButton afterSignOutUrl="/" />
-                    </div>
-                </div>
-            </nav>
+            <Navbar activePage="dashboard" />
 
             <main className="max-w-7xl mx-auto px-4 md:px-6 py-10">
                 {/* Header Section */}

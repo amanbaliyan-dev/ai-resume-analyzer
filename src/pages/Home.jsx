@@ -5,7 +5,7 @@ import {
     SignInButton,
     UserButton,
 } from "@clerk/clerk-react";
-import Logo from "../components/common/Logo";
+import Navbar from "../components/common/Navbar";
 
 function Home() {
     return (
@@ -16,37 +16,7 @@ function Home() {
             <div className="absolute bottom-1/4 left-1/3 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[130px] pointer-events-none -z-10" />
 
             {/* Navbar */}
-            <nav className="border-b border-gray-900/60 backdrop-blur-md sticky top-0 z-50 bg-[#03000a]/70">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <Logo />
-                    </Link>
-
-                    <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-300">
-                        <Link to="/resume" className="hover:text-purple-400 transition-colors">ResuAI</Link>
-                        <Link to="/interview" className="hover:text-purple-400 transition-colors">AI Mock Interview</Link>
-                        <Link to="/voice" className="hover:text-purple-400 transition-colors">Voice Interview</Link>
-                        <Link to="/coding" className="hover:text-purple-400 transition-colors">Coding Round</Link>
-                        <Link to="/dashboard" className="hover:text-purple-400 transition-colors">Dashboard</Link>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <SignedOut>
-                            <SignInButton mode="modal">
-                                <button className="bg-white text-black px-5 py-2.5 rounded-xl font-semibold hover:bg-gray-100 shadow-[0_4px_20px_rgba(255,255,255,0.15)] transition-all cursor-pointer">
-                                    Get Started
-                                </button>
-                            </SignInButton>
-                        </SignedOut>
-                        <SignedIn>
-                            <Link to="/dashboard" className="hidden sm:inline-block bg-gradient-to-r from-purple-500/10 to-pink-500/10 hover:from-purple-500/20 hover:to-pink-500/20 text-purple-300 border border-purple-500/30 px-4 py-2 rounded-xl font-medium transition-all mr-2">
-                                Go to Dashboard
-                            </Link>
-                            <UserButton afterSignOutUrl="/" />
-                        </SignedIn>
-                    </div>
-                </div>
-            </nav>
+            <Navbar activePage="home" />
 
             {/* Hero Section */}
             <header className="max-w-7xl mx-auto px-4 md:px-6 pt-24 pb-20 text-center relative">

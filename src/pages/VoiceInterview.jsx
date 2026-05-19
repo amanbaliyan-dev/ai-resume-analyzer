@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
-import Logo from "../components/common/Logo";
+import Navbar from "../components/common/Navbar";
 import { generateAIResponse } from "../services/ai/openrouter";
 
 function VoiceInterview() {
@@ -263,34 +263,13 @@ function VoiceInterview() {
     };
 
     return (
-        <div className="bg-[#03000a] text-white min-h-screen font-sans">
+        <div className="bg-[#03000a] text-white min-h-screen font-sans relative overflow-x-hidden">
             {/* Background Glows */}
             <div className="absolute top-0 right-1/4 w-[450px] h-[450px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
             <div className="absolute bottom-1/4 left-1/4 w-[450px] h-[450px] bg-pink-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
 
             {/* Navbar */}
-            <nav className="border-b border-gray-950 backdrop-blur-md sticky top-0 z-50 bg-[#03000a]/70">
-                <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 flex items-center justify-between">
-                    <Link to="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
-                        <Logo />
-                    </Link>
-
-                    <div className="hidden lg:flex items-center gap-8 text-sm font-medium text-gray-300">
-                        <Link to="/resume" className="hover:text-purple-400 transition-colors">ResuAI</Link>
-                        <Link to="/interview" className="hover:text-purple-400 transition-colors">AI Mock Interview</Link>
-                        <Link to="/voice" className="text-pink-400">Voice Interview</Link>
-                        <Link to="/coding" className="hover:text-purple-400 transition-colors">Coding Round</Link>
-                        <Link to="/dashboard" className="hover:text-purple-400 transition-colors">Dashboard</Link>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        <Link to="/" className="text-sm font-medium text-gray-400 hover:text-white mr-2 transition-colors">
-                            Exit Suite
-                        </Link>
-                        <UserButton afterSignOutUrl="/" />
-                    </div>
-                </div>
-            </nav>
+            <Navbar activePage="voice" />
 
             <main className="max-w-4xl mx-auto px-4 md:px-6 py-12">
                 {/* Step 1: Setup */}
