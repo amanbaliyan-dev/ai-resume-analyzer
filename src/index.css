@@ -1,1 +1,67 @@
 @import "tailwindcss";
+
+/* Custom Table overrides for AI Feedback and Reports */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background-color: #060211 !important;
+  border-radius: 16px !important;
+  overflow: hidden;
+}
+
+.prose th, .prose td {
+  padding: 1.25rem 1.5rem !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  background-color: #0d0822 !important;
+  color: #f472b6 !important; /* Premium pink text for headers */
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.05em;
+}
+
+.prose td {
+  color: #e2e8f0 !important;
+  background-color: transparent !important;
+}
+
+/* Force first column of tables (which act as labels) to be beautifully readable and dark background */
+.prose tr td:first-child, .prose tr th:first-child {
+  background-color: #0b071e !important;
+  color: #c084fc !important; /* Elegant purple for labels */
+  font-weight: 700 !important;
+  width: 25%;
+  min-width: 160px;
+}
+
+/* Even row stripes */
+.prose tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.015) !important;
+}
+
+/* Ensure pre and code blocks inside the AI evaluation look like premium IDE displays */
+.prose pre {
+  background-color: #020006 !important;
+  border: 1px solid rgba(168, 85, 247, 0.25) !important;
+  color: #e9d5ff !important;
+  padding: 1.5rem !important;
+  border-radius: 16px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  margin: 1.5rem 0 !important;
+  overflow-x: auto;
+}
+
+.prose code {
+  color: #f472b6 !important;
+  background-color: rgba(244, 114, 182, 0.1) !important;
+  padding: 0.25rem 0.5rem !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}

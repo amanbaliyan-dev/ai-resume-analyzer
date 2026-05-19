@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { generateAIResponse } from "../services/openrouter";
+import { generateAIResponse } from "../../services/ai/openrouter";
 
-import { extractTextFromPDF } from "../services/extractText";
+import { extractTextFromPDF } from "../../services/api/extractText";
 
 function Suggestions({ resumeFile, setAtsScore }) {
 
@@ -53,6 +53,16 @@ ${extractedText}
             const score = scoreMatch ? scoreMatch[1] : 75;
 
             setAtsScore(score);
+
+            // Save to localStorage for real dashboard tracking
+            const newResume = {
+                name: resumeFile?.name || "Uploaded_Resume.pdf",
+                date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                score: parseInt(score, 10),
+                status: score >= 85 ? "Excellent" : score >= 70 ? "Good" : "Needs Improvement"
+            };
+            const existingResumes = JSON.parse(localStorage.getItem("prep_ai_resumes") || "[]");
+            localStorage.setItem("prep_ai_resumes", JSON.stringify([newResume, ...existingResumes]));
 
             // Extract suggestions
             const suggestionMatches = response.match(/-\s(.+)/g);
