@@ -1,6 +1,12 @@
 # 🚀 ApexPrep AI: Elite Recruitment & Tech Interview Suite
 
-**ApexPrep AI** is a state-of-the-art, high-fidelity SaaS platform designed to supercharge technical recruitment and interview preparation. The platform leverages modern artificial intelligence to evaluate candidate resumes, conduct dynamic mock technical or behavioral assessments, simulate full-fidelity voice rooms, compile code inside custom developer sandboxes, and map technical progress on interactive radar dashboards.
+**ApexPrep AI** (formerly ResuAI) is a state-of-the-art, high-fidelity SaaS platform designed to supercharge technical recruitment and interview preparation. The platform leverages modern artificial intelligence to evaluate candidate resumes, conduct dynamic mock technical or behavioral assessments, simulate full-fidelity voice rooms, compile code inside custom developer sandboxes, and map technical progress on interactive radar dashboards.
+
+---
+
+## 🌐 Live Demo
+You can check out the deployed version of the suite here:
+👉 **[ApexPrep AI Suite Live Link](https://ai-resume-analyzer-six-brown.vercel.app/)**
 
 ---
 
@@ -8,7 +14,7 @@
 
 ### 1. 📄 ResuAI (AI Resume Analyzer)
 * **ATS Compatibility Scoring**: Instantly score PDF resumes against standard recruiting parsers.
-* **Structural Audits**: Analyze action verbs, section layout, stack-specific keywords, and format density.
+* **Structural Audits**: Analyze action verbs, section layout, stack-specific keywords, and format density using `pdfjs-dist`.
 * **Optimization Recommendations**: Get actionable bullet-by-bullet guidelines to improve resume scores.
 
 ### 2. 🎭 Standard AI Mock Interview
@@ -42,7 +48,9 @@
 * **Routing**: React Router DOM v6
 * **Authentication**: Clerk Authentication Suite
 * **AI Engine & Models**: Gemini 3 Flash / Gemini 3.1 Pro (via OpenRouter services)
+* **PDF Processing**: `pdfjs-dist`
 * **State & Tracking**: LocalStorage persistent sync layers
+* **Deployment**: Vercel
 
 ---
 
@@ -62,8 +70,10 @@ ai-interview-prep/
 │   │   ├── interview/
 │   │   └── resume/
 │   ├── services/
-│   │   └── ai/
-│   │       └── openrouter.js   # OpenRouter AI LLM integration endpoint
+│   │   ├── ai/
+│   │   │   └── openrouter.js   # OpenRouter AI LLM integration endpoint
+│   │   └── api/
+│   │       └── extractText.js  # PDF text extraction handler
 │   ├── pages/
 │   │   ├── Home.jsx            # Landing page with interactive grids
 │   │   ├── Dashboard.jsx       # Analytics center with SVG radar mapping
@@ -118,9 +128,16 @@ To build the production-ready build artifacts:
 ```bash
 npm run build
 ```
-This prepares the compiled build bundles within the `/dist` directory, optimized for immediate deployment on platforms like Vercel or Netlify.
+This prepares the compiled build bundles within the `/dist` directory, optimized for immediate deployment on platforms like Vercel.
 
 ---
 
 ## ⚖️ License
 Distributed under the MIT License. See `LICENSE` for more details.
+
+---
+
+## 👨‍💻 Author
+**Aman Baliyan**
+* GitHub: [@amanbaliyan-dev](https://github.com/amanbaliyan-dev)
+* LinkedIn: [Aman Baliyan](https://linkedin.com/in/aman-baliyan-7804a2205)
