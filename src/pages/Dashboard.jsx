@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { UserButton, useUser } from "@clerk/clerk-react";
 import Navbar from "../components/common/Navbar";
+import ShareButton from "../components/ShareButton";
 
 function Dashboard() {
     const { user } = useUser();
@@ -93,6 +94,17 @@ function Dashboard() {
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-3">
+                        {(avgAtsScore > 0 || avgCodingScore > 0) && (
+                            <ShareButton 
+                                score={avgAtsScore > 0 ? avgAtsScore : avgCodingScore} 
+                                role={interviews.length > 0 ? interviews[0].role : "Software Engineer"} 
+                                badge={
+                                    avgAtsScore >= 85 ? "ATS Champion" :
+                                    avgCodingScore >= 80 ? "DSA Beast" :
+                                    interviews.length >= 3 ? "Interview Master" : "Apex Candidate"
+                                }
+                            />
+                        )}
                         <Link to="/resume" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white px-5 py-3 rounded-xl font-bold shadow-md transition-all cursor-pointer">
                             Scan with ResuAI
                         </Link>
