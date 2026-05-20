@@ -11,6 +11,7 @@ function Navbar({ activePage }) {
         { id: "interview", label: "AI Mock Interview", path: "/interview" },
         { id: "voice", label: "Voice Interview", path: "/voice" },
         { id: "coding", label: "Coding Round", path: "/coding" },
+        { id: "studyplan", label: "Study Plan", path: "/study-plan" },
         { id: "dashboard", label: "Dashboard", path: "/dashboard" },
     ];
 

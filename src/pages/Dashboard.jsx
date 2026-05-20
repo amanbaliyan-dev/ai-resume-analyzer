@@ -11,6 +11,13 @@ function Dashboard() {
     const [resumes, setResumes] = useState([]);
     const [interviews, setInterviews] = useState([]);
     const [codingScores, setCodingScores] = useState([]);
+    const [radarScores, setRadarScores] = useState({
+        react: 40,
+        dsa: 40,
+        systemDesign: 35,
+        behavioural: 30,
+        apiDatabases: 40
+    });
 
     useEffect(() => {
         const loadedResumes = JSON.parse(localStorage.getItem("prep_ai_resumes") || "[]");
@@ -20,6 +27,33 @@ function Dashboard() {
         setResumes(loadedResumes);
         setInterviews(loadedInterviews);
         setCodingScores(loadedCoding);
+
+        // Load or initialize persistent radar scores
+        const storedRadar = localStorage.getItem("apexprep_radar_scores");
+        if (storedRadar) {
+            try {
+                setRadarScores(JSON.parse(storedRadar));
+            } catch (e) {
+                console.error("Error parsing radar scores", e);
+            }
+        } else {
+            // Calculate initial defaults based on other assessment logs
+            const rReact = loadedResumes.length > 0 ? Math.round(loadedResumes.reduce((acc, r) => acc + r.score, 0) / loadedResumes.length) : 40;
+            const rDsa = loadedCoding.length > 0 ? Math.round(loadedCoding.reduce((acc, s) => acc + s, 0) / loadedCoding.length) : 40;
+            const rSystem = loadedInterviews.length > 0 ? 75 : 35;
+            const rComms = loadedInterviews.length > 0 ? 80 : 30;
+            const rApi = loadedResumes.length > 0 ? Math.min(rReact + 5, 100) : 40;
+
+            const initialRadar = {
+                react: rReact,
+                dsa: rDsa,
+                systemDesign: rSystem,
+                behavioural: rComms,
+                apiDatabases: rApi
+            };
+            localStorage.setItem("apexprep_radar_scores", JSON.stringify(initialRadar));
+            setRadarScores(initialRadar);
+        }
     }, []);
 
     // Helper calculations for dynamic metrics
@@ -56,12 +90,11 @@ function Dashboard() {
     // 4. Communication (Left-Bottom): (110 - radius*cos(54), 110 + radius*sin(54))
     // 5. API & Databases (Left-Top): (110 - radius*cos(18), 110 - radius*sin(18))
     const getRadarPoints = () => {
-        // Fallbacks if no data exists yet
-        const rReact = (avgAtsScore > 0 ? avgAtsScore : 40) / 100 * 100;
-        const rDsa = (avgCodingScore > 0 ? avgCodingScore : 40) / 100 * 100;
-        const rSystem = (interviewsCount > 0 ? 75 : 35) / 100 * 100;
-        const rComms = (interviewsCount > 0 ? 80 : 30) / 100 * 100;
-        const rApi = (avgAtsScore > 0 ? Math.min(avgAtsScore + 5, 100) : 40) / 100 * 100;
+        const rReact = (radarScores.react ?? 40) / 100 * 100;
+        const rDsa = (radarScores.dsa ?? 40) / 100 * 100;
+        const rSystem = (radarScores.systemDesign ?? 35) / 100 * 100;
+        const rComms = (radarScores.behavioural ?? 30) / 100 * 100;
+        const rApi = (radarScores.apiDatabases ?? 40) / 100 * 100;
 
         // Calculate coordinates based on angle radiuses
         const p1 = `${110},${110 - rReact}`;
@@ -107,6 +140,9 @@ function Dashboard() {
                         )}
                         <Link to="/resume" className="bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white px-5 py-3 rounded-xl font-bold shadow-md transition-all cursor-pointer">
                             Scan with ResuAI
+                        </Link>
+                        <Link to="/study-plan" className="bg-gradient-to-r from-indigo-500 to-purple-500 hover:opacity-90 text-white px-5 py-3 rounded-xl font-bold shadow-md transition-all cursor-pointer">
+                            Study Plan
                         </Link>
                         <Link to="/interview" className="bg-[#0e091d] border border-purple-500/20 text-purple-300 px-5 py-3 rounded-xl font-bold hover:bg-purple-500/10 transition-all cursor-pointer">
                             Standard Mock
@@ -279,11 +315,11 @@ function Dashboard() {
                                 />
 
                                 {/* Category Labels */}
-                                <text x="110" y="8" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="middle">React ({avgAtsScore > 0 ? avgAtsScore : 40}%)</text>
-                                <text x="210" y="82" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="start">DSA ({avgCodingScore > 0 ? avgCodingScore : 40}%)</text>
-                                <text x="175" y="202" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="start">System Design ({interviewsCount > 0 ? 75 : 35}%)</text>
-                                <text x="45" y="202" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="end">Comms ({interviewsCount > 0 ? 80 : 30}%)</text>
-                                <text x="10" y="82" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="end">API/DB ({avgAtsScore > 0 ? Math.min(avgAtsScore + 5, 100) : 40}%)</text>
+                                <text x="110" y="8" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="middle">React ({radarScores.react}%)</text>
+                                <text x="210" y="82" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="start">DSA ({radarScores.dsa}%)</text>
+                                <text x="175" y="202" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="start">System Design ({radarScores.systemDesign}%)</text>
+                                <text x="45" y="202" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="end">Comms ({radarScores.behavioural}%)</text>
+                                <text x="10" y="82" fill="#a1a1aa" fontSize="9" fontWeight="bold" textAnchor="end">API/DB ({radarScores.apiDatabases}%)</text>
                             </svg>
                         </div>
 

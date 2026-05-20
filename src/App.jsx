@@ -9,6 +9,7 @@ import VoiceInterview from "./pages/VoiceInterview";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import ShareCard from "./pages/ShareCard";
+import StudyPlan from "./pages/StudyPlan";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/share/:uid" element={<ShareCard />} />
+        <Route path="/study-plan" element={<StudyPlan />} />
       </Routes>
     </BrowserRouter>
   );

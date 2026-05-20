@@ -5,6 +5,19 @@ import Navbar from "../components/common/Navbar";
 import { generateAIResponse } from "../services/ai/openrouter";
 import { useBodyLanguage } from "../hooks/useBodyLanguage";
 import { getBodyLanguageAudit } from "../services/bodyLanguage/audit";
+import { DifficultyEngine, radarToLevels, updateRadar } from "../services/adaptiveDifficulty";
+import { generateNextQuestion, scoreAnswer } from "../services/ai/interviewAgent";
+
+const getDomainsForRole = (roleName) => {
+    const name = roleName.toLowerCase();
+    if (name.includes("react") || name.includes("frontend")) {
+        return ["react", "systemDesign", "behavioural"];
+    } else if (name.includes("backend") || name.includes("api") || name.includes("database")) {
+        return ["apiDatabases", "systemDesign", "behavioural"];
+    } else {
+        return ["dsa", "systemDesign", "behavioural"];
+    }
+};
 
 function VoiceInterview() {
     const [step, setStep] = useState("setup");
@@ -12,6 +25,19 @@ function VoiceInterview() {
     const [company, setCompany] = useState("Meta");
     const [level, setLevel] = useState("Mid-level");
     const [loading, setLoading] = useState(false);
+
+    // Adaptive Engine states
+    const [difficultyEngine, setDifficultyEngine] = useState(null);
+    const [toast, setToast] = useState(null);
+    const [currentDomain, setCurrentDomain] = useState("");
+    const [domains, setDomains] = useState([]);
+
+    const showDifficultyToast = (message, type) => {
+        setToast({ message, type });
+        setTimeout(() => {
+            setToast(null);
+        }, 5000);
+    };
 
     const [questions, setQuestions] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -155,33 +181,36 @@ function VoiceInterview() {
     const startVoiceInterview = async () => {
         try {
             setLoading(true);
-            const prompt = `
-            Act as an executive recruiter conducting a dynamic audio interview for a ${level} ${role} role at ${company}.
-            Generate exactly 3 concise, impactful, and conversational questions suitable for verbal answering.
-            Return them ONLY as a JSON list, formatted exactly like:
-            ["Question 1", "Question 2", "Question 3"]
-            `;
+            const detectedDomains = getDomainsForRole(role);
+            setDomains(detectedDomains);
 
-            const res = await generateAIResponse(prompt);
-            let parsed = [];
-            try {
-                const cleaned = res.replace(/```json/g, "").replace(/```/g, "").trim();
-                parsed = JSON.parse(cleaned);
-            } catch (err) {
-                parsed = [
-                    `Tell me briefly about yourself and why you're interested in the ${role} position at ${company}.`,
-                    `Explain a complex technical system or process you designed, describing it in a way anyone could understand.`,
-                    `How do you manage deadlines when multiple projects compete for your limited time?`
-                ];
+            // Load initial radar scores
+            const storedRadar = localStorage.getItem("apexprep_radar_scores");
+            let radarScores = { dsa: 40, systemDesign: 35, behavioural: 30, react: 40, apiDatabases: 40 };
+            if (storedRadar) {
+                try {
+                    radarScores = JSON.parse(storedRadar);
+                } catch (e) {
+                    console.error("Failed to parse radar scores", e);
+                }
             }
+            const initialLevels = radarToLevels(radarScores);
+            const engine = new DifficultyEngine(initialLevels);
+            setDifficultyEngine(engine);
 
-            setQuestions(parsed);
+            const firstDomain = detectedDomains[0];
+            setCurrentDomain(firstDomain);
+
+            const question = await generateNextQuestion(engine, firstDomain, role, company, `Candidate Level: ${level}`);
+            setQuestions([question]);
+            setCurrentIndex(0);
             setStep("interviewing");
             
             // Speak the first question
-            setTimeout(() => speakText(parsed[0]), 500);
+            setTimeout(() => speakText(question), 500);
         } catch (e) {
-            console.error(e);
+            console.error("Failed to initiate voice interview", e);
+            alert("Could not initialize voice questions. Please verify your OpenRouter key.");
         } finally {
             setLoading(false);
         }
@@ -202,42 +231,108 @@ function VoiceInterview() {
         }
     };
 
-    const handleNextQuestion = () => {
+    const handleNextQuestion = async () => {
         if (isListening) stopListening();
+        setLoading(true);
 
-        const currentAnswer = {
-            question: questions[currentIndex],
-            answer: transcript || "[No response detected]"
-        };
+        const currentAnswerText = transcript || "[No response detected]";
 
-        const updatedAnswers = [...answers, currentAnswer];
-        setAnswers(updatedAnswers);
-        setTranscript("");
+        try {
+            // Score candidate response
+            const scoreResult = await scoreAnswer(questions[currentIndex], currentAnswerText, currentDomain);
 
-        if (currentIndex + 1 < questions.length) {
-            const nextIdx = currentIndex + 1;
-            setCurrentIndex(nextIdx);
-            // Read next question
-            setTimeout(() => speakText(questions[nextIdx]), 600);
-        } else {
-            // End of voice interview, process analytics
-            if (bodyLanguageScores) {
-                setFinalBodyScores(bodyLanguageScores);
+            // Update Engine
+            const updateResult = difficultyEngine.update(currentDomain, scoreResult.score);
+
+            if (updateResult.action === 'promoted') {
+                const domainLabel = currentDomain === 'behavioural' ? 'Behavioral' : currentDomain === 'react' ? 'React' : currentDomain.toUpperCase();
+                showDifficultyToast(`Nice work — stepping up to level ${updateResult.newLevel}/4 in ${domainLabel}`, 'promoted');
+            } else if (updateResult.action === 'demoted') {
+                const domainLabel = currentDomain === 'behavioural' ? 'Behavioral' : currentDomain === 'react' ? 'React' : currentDomain.toUpperCase();
+                showDifficultyToast(`Let's solidify the fundamentals of ${domainLabel} (Level ${updateResult.newLevel}/4)`, 'demoted');
             }
-            generateVoiceEvaluation(updatedAnswers, bodyLanguageScores);
+
+            const currentAnswer = {
+                question: questions[currentIndex],
+                answer: currentAnswerText,
+                domain: currentDomain,
+                score: scoreResult.score,
+                feedback: scoreResult.feedback,
+                missingConcepts: scoreResult.missingConcepts
+            };
+
+            const updatedAnswers = [...answers, currentAnswer];
+            setAnswers(updatedAnswers);
+            setTranscript("");
+
+            const nextIndex = currentIndex + 1;
+            if (nextIndex < 3) {
+                const nextDomain = domains[nextIndex];
+                setCurrentDomain(nextDomain);
+
+                const conversationHistory = updatedAnswers.map(ans => [
+                    { role: 'assistant', content: ans.question },
+                    { role: 'user', content: ans.answer }
+                ]).flat();
+
+                const nextQuestion = await generateNextQuestion(difficultyEngine, nextDomain, role, company, `Candidate Level: ${level}`, conversationHistory);
+
+                setQuestions(prev => [...prev, nextQuestion]);
+                setCurrentIndex(nextIndex);
+                // Read next question
+                setTimeout(() => speakText(nextQuestion), 650);
+            } else {
+                // End of voice interview, process analytics
+                if (bodyLanguageScores) {
+                    setFinalBodyScores(bodyLanguageScores);
+                }
+                await generateVoiceEvaluation(updatedAnswers, bodyLanguageScores);
+            }
+        } catch (error) {
+            console.error("Error processing voice step", error);
+            alert("Could not evaluate response. Please click Submit and Next again.");
+        } finally {
+            setLoading(false);
         }
     };
 
     const generateVoiceEvaluation = async (allAnswers, finalBodyScores) => {
         try {
             setStep("evaluating");
-            const formattedQA = allAnswers.map((qa, index) => (
-                `Q${index + 1}: ${qa.question}\nA${index + 1}: ${qa.answer}\n`
-            )).join("\n");
+            setLoading(true);
 
-            const prompt = `
+            const averageScore = Math.round(allAnswers.reduce((acc, a) => acc + a.score, 0) / allAnswers.length);
+
+            // Save dynamic radar scores
+            const storedRadar = JSON.parse(localStorage.getItem("apexprep_radar_scores") || "{}");
+            const summary = difficultyEngine.getSessionSummary();
+            const updatedRadar = updateRadar(storedRadar, summary);
+            localStorage.setItem("apexprep_radar_scores", JSON.stringify(updatedRadar));
+
+            const qaBlocks = allAnswers.map((qa, index) => {
+                const domLabel = qa.domain === 'behavioural' ? 'Behavioral' : qa.domain === 'react' ? 'React' : qa.domain.toUpperCase();
+                return `
+                <div class="bg-[#03000a] border border-gray-950 rounded-2xl p-6 mb-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-900 pb-3">
+                        <span class="text-xs font-bold text-purple-400 uppercase tracking-widest">${domLabel} Domain</span>
+                        <span class="text-sm font-bold text-gray-200 bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">${qa.score}/100</span>
+                    </div>
+                    <p class="text-gray-100 font-bold mb-3 text-base">Q: ${qa.question}</p>
+                    <p class="text-gray-400 text-sm mb-4 bg-gray-950/40 p-4 rounded-xl border border-gray-900/40 italic">A: "${qa.answer}"</p>
+                    <div class="bg-[#090514] border border-purple-500/10 rounded-xl p-4 text-sm space-y-2.5">
+                        <p class="text-gray-300"><strong class="text-purple-300 font-extrabold block mb-1">AI Evaluator Feedback:</strong> ${qa.feedback}</p>
+                        ${qa.missingConcepts && qa.missingConcepts.length > 0 
+                            ? `<p class="text-gray-400"><strong class="text-pink-400 font-extrabold block mb-1">Key Conceptual Gaps:</strong> ${qa.missingConcepts.join(', ')}</p>` 
+                            : ''
+                        }
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            const evaluationPrompt = `
             Review these spoken audio answers from an interview for a ${level} ${role} at ${company}:
-            ${formattedQA}
+            ${allAnswers.map((qa, i) => `Q${i+1}: ${qa.question}\nA${i+1}: ${qa.answer}`).join('\n')}
 
             Provide a detailed report analyzing:
             1. Total Score out of 100
@@ -249,7 +344,7 @@ function VoiceInterview() {
             Return the output in premium clean styled HTML tags with grids and bullet points. Make it feel elite.
             `;
 
-            const voicePromise = generateAIResponse(prompt);
+            const voicePromise = generateAIResponse(evaluationPrompt);
             let bodyPromise = Promise.resolve("");
             if (finalBodyScores) {
                 bodyPromise = getBodyLanguageAudit(finalBodyScores, import.meta.env.VITE_OPENROUTER_API_KEY);
@@ -257,26 +352,64 @@ function VoiceInterview() {
 
             const [voiceRes, bodyRes] = await Promise.all([voicePromise, bodyPromise]);
 
-            setEvaluation(voiceRes);
+            const finalHtml = `
+            <div class="space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-[#0e091d]/50 border border-purple-500/20 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
+                        <div class="absolute -top-6 -right-6 w-16 h-16 bg-purple-500/10 rounded-full blur-xl" />
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Overall Verbal Score</span>
+                        <span class="text-5xl font-extrabold text-white bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">${averageScore}%</span>
+                    </div>
+                    <div class="bg-[#0e091d]/50 border border-pink-500/20 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
+                        <div class="absolute -top-6 -right-6 w-16 h-16 bg-pink-500/10 rounded-full blur-xl" />
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Calibrated Top Domain</span>
+                        <span class="text-2xl font-extrabold text-pink-400 capitalize">${(summary.topDomain || '').replace(/([A-Z])/g, ' $1')}</span>
+                    </div>
+                    <div class="bg-[#0e091d]/50 border border-indigo-500/20 rounded-3xl p-6 text-center shadow-lg relative overflow-hidden">
+                        <div class="absolute -top-6 -right-6 w-16 h-16 bg-indigo-500/10 rounded-full blur-xl" />
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-widest block mb-2">Calibrated Focus</span>
+                        <span class="text-2xl font-extrabold text-indigo-400 capitalize">${(summary.weakDomain || '').replace(/([A-Z])/g, ' $1')}</span>
+                    </div>
+                </div>
+
+                <div class="bg-purple-950/10 border border-purple-500/20 rounded-3xl p-6">
+                    <h4 class="text-purple-300 font-extrabold text-base mb-2">Adaptive Calibration Log</h4>
+                    <p class="text-gray-400 text-xs leading-relaxed">
+                        The Difficulty Engine evaluated your vocal responses in real-time. Final coordinates have been dynamically blended (60% historical / 40% current session weight) and saved to your profile. Check your Dashboard radar chart to inspect details!
+                    </p>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-lg font-bold text-gray-200 mb-6">Verbal Transcript & Diagnostics</h3>
+                    ${qaBlocks}
+                </div>
+
+                <div class="border-t border-gray-900 pt-8">
+                    <h3 class="text-lg font-bold text-gray-200 mb-6">AI Vocal Report Analysis</h3>
+                    <div class="prose prose-invert max-w-none text-gray-300 font-medium">${voiceRes}</div>
+                </div>
+            </div>
+            `;
+
+            setEvaluation(finalHtml);
             setBodyLanguageAuditText(bodyRes);
             setStep("feedback");
 
             // Save to localStorage for real dashboard tracking
-            const scoreMatch = voiceRes.match(/Overall Score:\s*(\d+)/i) || voiceRes.match(/Score:\s*(\d+)/i) || voiceRes.match(/(\d+)\/100/);
-            const scoreVal = scoreMatch ? `${scoreMatch[1]}/100` : "75/100";
-            
             const newInterview = {
                 role: `${role} (${company})`,
                 type: "AI Voice & Vision Interview",
-                score: scoreVal,
-                date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric" }) + ", " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+                score: `${averageScore}/100`,
+                date: new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric" }) + ", " + new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })
             };
-            
             const existingInterviews = JSON.parse(localStorage.getItem("prep_ai_interviews") || "[]");
             localStorage.setItem("prep_ai_interviews", JSON.stringify([newInterview, ...existingInterviews]));
 
         } catch (e) {
-            console.error(e);
+            console.error("Error generating voice summary feedback", e);
+            setEvaluation("<p class='text-red-400'>Failed to compile final evaluation report.</p>");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -290,10 +423,24 @@ function VoiceInterview() {
         setFinalBodyScores(null);
         setBodyLanguageAuditText("");
         setActiveTab("vocal");
+        setDifficultyEngine(null);
+        setToast(null);
     };
 
     return (
         <div className="bg-[#03000a] text-white min-h-screen font-sans relative overflow-x-hidden">
+            {/* Real-time Adaptive Toast */}
+            {toast && (
+                <div className={`fixed bottom-8 right-8 z-50 px-6 py-4.5 rounded-2xl border backdrop-blur-xl shadow-[0_4px_30px_rgba(168,85,247,0.15)] flex items-center gap-3.5 transition-all duration-300 animate-pulse ${
+                    toast.type === 'promoted' 
+                        ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-300'
+                        : 'bg-amber-950/90 border-amber-500/30 text-amber-300'
+                }`}>
+                    <span className="text-xl">{toast.type === 'promoted' ? '🚀' : '⚠️'}</span>
+                    <span className="font-bold text-sm tracking-wide">{toast.message}</span>
+                </div>
+            )}
+
             {/* Background Glows */}
             <div className="absolute top-0 right-1/4 w-[450px] h-[450px] bg-purple-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
             <div className="absolute bottom-1/4 left-1/4 w-[450px] h-[450px] bg-pink-600/5 rounded-full blur-[120px] pointer-events-none -z-10" />
@@ -390,7 +537,7 @@ function VoiceInterview() {
                                 <div className="bg-[#090514]/70 border border-gray-900 rounded-3xl p-6 md:p-8 flex flex-col gap-6 shadow-md relative">
                                     <div className="flex justify-between items-center text-xs font-bold text-pink-400 uppercase tracking-widest">
                                         <span>PrepAI Vocal Agent</span>
-                                        <span>Question {currentIndex + 1} of {questions.length}</span>
+                                        <span>Question {currentIndex + 1} of 3</span>
                                     </div>
 
                                     <h2 className="text-lg md:text-xl font-bold bg-[#03000a] border border-gray-950 p-5 rounded-2xl leading-relaxed text-center text-gray-100">
@@ -474,7 +621,7 @@ function VoiceInterview() {
                             onClick={handleNextQuestion}
                             className="w-full max-w-2xl bg-gradient-to-r from-pink-500 to-indigo-600 hover:opacity-90 py-4.5 rounded-2xl font-extrabold text-lg shadow-lg cursor-pointer mt-4"
                         >
-                            {currentIndex + 1 < questions.length ? "Submit and Next Question" : "Submit Answer & Generate Evaluation"}
+                            {currentIndex + 1 < 3 ? "Submit and Next Question" : "Submit Answer & Generate Evaluation"}
                         </button>
                     </section>
                 )}
