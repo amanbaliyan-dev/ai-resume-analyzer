@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { UserButton } from "@clerk/clerk-react";
 import Navbar from "../components/common/Navbar";
@@ -17,8 +17,31 @@ function Interview() {
     const [feedback, setFeedback] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Camera feed simulation toggle
+    // Camera feed active toggle
     const [cameraActive, setCameraActive] = useState(true);
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        let activeStream = null;
+        if (step === "interviewing" && cameraActive) {
+            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+                .then(s => {
+                    activeStream = s;
+                    if (videoRef.current) {
+                        videoRef.current.srcObject = s;
+                    }
+                })
+                .catch(err => {
+                    console.error("Error accessing webcam:", err);
+                });
+        }
+
+        return () => {
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, [step, cameraActive]);
 
     const startInterview = async () => {
         if (!jd.trim()) {
@@ -212,14 +235,18 @@ function Interview() {
                     <section className="grid grid-cols-1 md:grid-cols-5 gap-8">
                         {/* Left Column: Webcam & Interaction (2 cols) */}
                         <div className="md:col-span-2 flex flex-col gap-6">
-                            <div className="bg-[#0b0b0c] border border-gray-900 rounded-3xl overflow-hidden aspect-video md:aspect-[4/5] flex flex-col items-center justify-center relative shadow-lg">
+                            <div className="bg-[#0b0b0c] border border-gray-900 rounded-3xl overflow-hidden aspect-video md:aspect-[4/5] flex flex-col items-center justify-center relative shadow-lg animate-fade-in">
                                 {cameraActive ? (
-                                    <div className="w-full h-full bg-[#08080a] flex items-center justify-center relative">
-                                        {/* Faux web camera representation */}
-                                        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500/20 to-purple-500/20 border border-purple-500/40 animate-pulse flex items-center justify-center font-bold text-purple-400">
-                                            Live
-                                        </div>
-                                        <div className="absolute bottom-5 left-5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2">
+                                    <div className="w-full h-full bg-[#08080a] relative">
+                                        <video
+                                            ref={videoRef}
+                                            autoPlay
+                                            muted
+                                            playsInline
+                                            className="w-full h-full object-cover"
+                                            style={{ transform: "scaleX(-1)" }}
+                                        />
+                                        <div className="absolute bottom-5 left-5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-2 z-10">
                                             <span className="w-2.5 h-2.5 rounded-full bg-pink-500 animate-ping" />
                                             <span>Webcam Active</span>
                                         </div>
@@ -229,7 +256,7 @@ function Interview() {
                                 )}
                                 
                                 {/* Micro audio animation inside camera block */}
-                                <div className="absolute bottom-5 right-5 flex items-center gap-1">
+                                <div className="absolute bottom-5 right-5 flex items-center gap-1 z-10">
                                     <span className="w-1 h-3 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }} />
                                     <span className="w-1 h-5 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: "0.3s" }} />
                                     <span className="w-1 h-2 bg-pink-500 rounded-full animate-bounce" style={{ animationDelay: "0.5s" }} />
