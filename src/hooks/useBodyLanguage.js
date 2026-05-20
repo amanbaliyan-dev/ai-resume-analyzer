@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Holistic } from '@mediapipe/holistic';
-import { Camera } from '@mediapipe/camera_utils';
 import { BodyLanguageAnalyzer } from '../services/bodyLanguage/analyzer';
 
 export function useBodyLanguage(videoRef, canvasRef, isActive) {
@@ -59,52 +57,91 @@ export function useBodyLanguage(videoRef, canvasRef, isActive) {
       return;
     }
 
-    const holistic = new Holistic({
-      locateFile: file =>
-        `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
-    });
+    let active = true;
+    let checkInterval = null;
 
-    holistic.setOptions({
-      modelComplexity: navigator.userAgent.match(/Mobi|Android|iPhone/i) ? 0 : 1,
-      smoothLandmarks: true,
-      enableSegmentation: false,
-      refineFaceLandmarks: true, // enables iris landmarks (468+)
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+    const initMediaPipe = () => {
+      const HolisticLib = window.Holistic || globalThis.Holistic;
+      const CameraLib = window.Camera || globalThis.Camera;
 
-    holistic.onResults(results => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      drawOverlay(results, ctx, canvas.width, canvas.height);
+      if (!HolisticLib || !CameraLib) {
+        // Not loaded yet, try again
+        return false;
+      }
 
-      const summary = analyzerRef.current.analyze(results);
-      summary.overallScore = analyzerRef.current.getOverallScore(summary);
-      setScores(summary);
-    });
+      if (checkInterval) {
+        clearInterval(checkInterval);
+        checkInterval = null;
+      }
 
-    holisticRef.current = holistic;
+      if (!active) return true;
 
-    const camera = new Camera(videoRef.current, {
-      onFrame: async () => {
-        if (holistic) {
-          await holistic.send({ image: videoRef.current });
+      const holistic = new HolisticLib({
+        locateFile: file =>
+          `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`,
+      });
+
+      holistic.setOptions({
+        modelComplexity: navigator.userAgent.match(/Mobi|Android|iPhone/i) ? 0 : 1,
+        smoothLandmarks: true,
+        enableSegmentation: false,
+        refineFaceLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5,
+      });
+
+      holistic.onResults(results => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        drawOverlay(results, ctx, canvas.width, canvas.height);
+
+        const summary = analyzerRef.current.analyze(results);
+        summary.overallScore = analyzerRef.current.getOverallScore(summary);
+        setScores(summary);
+      });
+
+      holisticRef.current = holistic;
+
+      const camera = new CameraLib(videoRef.current, {
+        onFrame: async () => {
+          if (holistic && active) {
+            await holistic.send({ image: videoRef.current });
+          }
+        },
+        width: 640,
+        height: 480,
+      });
+
+      camera.start().then(() => {
+        if (active) setReady(true);
+      }).catch(err => console.error("Camera start failed:", err));
+      cameraRef.current = camera;
+
+      return true;
+    };
+
+    // Attempt immediately
+    const success = initMediaPipe();
+    if (!success) {
+      // Set up interval to poll until loaded
+      checkInterval = setInterval(() => {
+        if (initMediaPipe()) {
+          clearInterval(checkInterval);
         }
-      },
-      width: 640,
-      height: 480,
-    });
-
-    camera.start().then(() => setReady(true)).catch(err => console.error("Camera start failed:", err));
-    cameraRef.current = camera;
+      }, 300);
+    }
 
     return () => {
-      if (camera) {
-        camera.stop();
+      active = false;
+      if (checkInterval) clearInterval(checkInterval);
+      if (cameraRef.current) {
+        cameraRef.current.stop();
+        cameraRef.current = null;
       }
-      if (holistic) {
-        holistic.close();
+      if (holisticRef.current) {
+        holisticRef.current.close();
+        holisticRef.current = null;
       }
       analyzerRef.current.reset();
       setReady(false);
