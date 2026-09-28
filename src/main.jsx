@@ -5,14 +5,15 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { HelmetProvider } from "react-helmet-async";
 
 import App from "./App";
+import { getClientEnv } from "./config/env";
 
 import "./index.css";
 
-const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const { clerkPublishableKey } = getClientEnv();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <ClerkProvider publishableKey={clerkPubKey}>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
       <HelmetProvider>
         <App />
       </HelmetProvider>
